@@ -5,8 +5,6 @@
 using namespace std;
 
 #ifdef WIN32
-    #pragma warning(disable: 4005)
-    #pragma warning(disable: 4244)
     #include <time.h>
     #include <Windows.h>
     #ifndef INT64_MIN
