@@ -1,2 +1,2 @@
-# Type-length-value
+# type-length-value
 tlv

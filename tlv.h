@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace tlv
-{
+namespace tlv {
 class Tlv {
 public:
     Tlv(int type, bool value) : type_(type)

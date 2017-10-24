@@ -75,8 +75,8 @@ int main() {
 #define TEST(type, x) \
     { \
         type value; \
-	decoder.Get(x, value); \
-	cout << "Get "#type" ok, " << value << endl; \
+	    decoder.Get(x, value); \
+	    cout << "Get "#type" ok, " << value << endl; \
     }
 
     TEST(bool, TYPE_BOOL)
@@ -94,9 +94,11 @@ int main() {
 
     {
         char value[64];
-	int length = 64;
-	decoder.Get(TYPE_CHARS, value, length);
-	cout << "Get char* ok, " << value << endl;
+	    int length = 64;
+	    decoder.Get(TYPE_CHARS, value, length);
+	    cout << "Get char* ok, " << value << endl;
+        printf("%p\n", &decoder);
+        getchar();
     }
 
     return 0;
