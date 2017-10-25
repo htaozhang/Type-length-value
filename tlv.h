@@ -28,7 +28,7 @@ public:
  
 	~Tlv();
     int Type() const;
-    int Length() const;
+    std::size_t Length() const;
     const unsigned char* Value() const;
 
 private:
@@ -38,7 +38,7 @@ private:
 
 private:
     int type_;
-    int length_;
+    std::size_t length_;
     unsigned char* value_;
 };
 
@@ -56,6 +56,16 @@ private:
 
     bool SetImpl(Tlv* value);
 
+	template<typename T>
+	bool GetImpl(int type, T& value) {
+		std::map<int, Tlv*>::const_iterator iter = data_.find(type); 
+			if (iter != data_.end()) {
+				value = *(T*)(iter->second->Value()); 
+				return true; 
+			} 
+		return false;
+	}
+
 public:
     bool Serialization();
 	bool Deserialization(const unsigned char* buffer, int length);
@@ -63,7 +73,7 @@ public:
 	bool Set(int type, const bool& value);
 	bool Get(int type, bool& value) const;
 
-	bool Set(int type, const int8_t& value);   
+	bool Set(int type, const int8_t& value);
 	bool Get(int type, int8_t& value) const;
 
 	bool Set(int type, const uint8_t& value); 
@@ -104,11 +114,11 @@ public:
 
 public:
 	const unsigned char* Buffer() const;
-	int Length() const;
+	std::size_t Length() const;
 private:
     std::map<int, Tlv*> data_;
     unsigned char* buffer_;
-    int length_;
+    std::size_t length_;
 };
 
 }

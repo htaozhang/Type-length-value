@@ -2,6 +2,7 @@
 
 namespace tlv
 {
+
 void Tlv::TlvImpl(const void* value, std::size_t length) {
     length_ = length; 
     value_ = new unsigned char[length];
@@ -92,7 +93,7 @@ int Tlv::Type() const {
     return type_;
 }
 
-int Tlv::Length() const {
+std::size_t Tlv::Length() const {
     return length_;
 }
 
@@ -133,7 +134,7 @@ const unsigned char* TlvMap::Buffer() const {
 	return buffer_;
 }
 
-int TlvMap::Length() const {
+std::size_t TlvMap::Length() const {
 	return length_;
 }
 
@@ -144,8 +145,7 @@ bool TlvMap::Serialization() {
         return false;
     }
 
-    for (std::map<int, Tlv*>::iterator iter = data_.begin(); 
-         iter != data_.end(); iter++) {
+    for (std::map<int, Tlv*>::iterator iter = data_.begin(); iter != data_.end(); iter++) {
         static int offset = 0;
         int type = iter->second->Type();
         memcpy(buffer_ + offset, &type, sizeof(int));
