@@ -2,7 +2,7 @@
 
 namespace tlv
 {
-void Tlv::TlvImpl(const void* value, int length) {
+void Tlv::TlvImpl(const void* value, std::size_t length) {
     length_ = length; 
     value_ = new unsigned char[length_];
     memcpy(value_, value, length_);

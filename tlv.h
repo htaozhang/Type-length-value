@@ -63,7 +63,7 @@ public:
 private:
     Tlv(const Tlv&);
     Tlv& operator=(const Tlv&);
-    void TlvImpl(const void* value, int length);        
+    void TlvImpl(const void* value, std::size_t length);        
 
 private:
     int type_;
