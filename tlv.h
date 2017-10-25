@@ -8,19 +8,15 @@
 #include <string.h>
 
 namespace tlv {
+template<typename T>
 class Tlv {
 public:
-	Tlv(int type, const bool& value);
-	Tlv(int type, const int8_t& value);
-	Tlv(int type, const uint8_t& value);
-	Tlv(int type, const int16_t& value);
-	Tlv(int type, const uint16_t& value);
-	Tlv(int type, const int32_t& value);
-	Tlv(int type, const uint32_t& value);
-	Tlv(int type, const int64_t& value);
-	Tlv(int type, const uint64_t& value);
-	Tlv(int type, const float& value);
-	Tlv(int type, const double& value);
+	Tlv(int type, const T& value, int length = -1) {
+        length_ = length < 0 ? sizeof(T) : length;
+        value_ = new unsigned char[length_];
+        memcpy(value_, &value, length_);
+    }
+
 	Tlv(int type, const char* value);
 	Tlv(int type, const std::string& value);
 	Tlv(int type, const Tlv& value);
