@@ -1,2 +1,4 @@
 *.exe
 *.o
+./msvc/2017/Debug
+./msvc/2017/.vs

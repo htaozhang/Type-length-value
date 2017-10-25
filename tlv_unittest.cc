@@ -2,36 +2,8 @@
 #include <iostream>
 
 #include "tlv.h"
+
 using namespace std;
-
-#ifdef WIN32
-    #include <time.h>
-    #include <Windows.h>
-    #ifndef INT64_MIN
-    	#define INT64_MIN  LLONG_MIN
-    #endif
-    #ifndef INT64_MAX
-        #define INT64_MAX  LLONG_MAX
-    #endif
-    #ifndef UINT64_MAX
-        #define UINT64_MAX ULLONG_MAX
-    #endif
-#elif __APPLE__
-    #include <sys/time.h>
-    typedef suseconds_t __suseconds_t;
-#else
-    #include <sys/time.h>
-    #ifndef INT64_MIN
-        #define INT64_MIN   LONG_LONG_MIN
-    #endif
-    #ifndef INT64_MAX
-        #define INT64_MAX   LONG_LONG_MAX
-    #endif
-    #ifndef UINT64_MAX
-        #define UINT64_MAX  ULONG_LONG_MAX
-    #endif
-#endif
-
 
 enum Type {
     TYPE_BOOL = 1,

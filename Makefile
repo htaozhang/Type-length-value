@@ -1,7 +1,7 @@
-all: unittest
+all: tlv_unittest
 
-unittest : unittest.cc tlv.cc
+unittest : tlv_unittest.cc tlv.cc
 	g++ -g -Wall -o $@ $^
 
 clean:
-	rm unittest
+	rm tlv_unittest
