@@ -102,53 +102,16 @@ bool TlvMap::SetImpl(Tlv* ptlv) {
     return true;
 }
 
-bool TlvMap::Serialization() {
-    buffer_ = new unsigned char[length_];
-    
-    if (!buffer_) {
-        return false;
-    }
-
-    for (std::map<int, Tlv*>::iterator iter = data_.begin(); iter != data_.end(); iter++) {
-        static int offset = 0;
-        int type = iter->second->Type();
-        memcpy(buffer_ + offset, &type, sizeof(int));
-        offset += sizeof(int);
-        int length = iter->second->Length();
-        memcpy(buffer_ + offset, &length, sizeof(int));
-        offset += sizeof(int);
-        memcpy(buffer_ + offset, iter->second->Value(), length);
-        offset += length;
-    }
-
-    return true;
-}
-
-bool TlvMap::Deserialization(const unsigned char* buffer, int length) {
-	if (!buffer || length <= 0) {
-		return false;
-	}
-
-	for (int offset = 0; offset < length;) {
-		int type = *(int*)(buffer + offset);
-		offset += sizeof(int);
-		int length = *(int*)(buffer + offset);
-		offset += sizeof(int);
-		Set(type, buffer + offset, length);
-		offset += length;
-	}
-
-	buffer_ = const_cast<unsigned char*>(buffer);
-	length_ = length;
-	return true;
-}
-
-
 bool TlvMap::Set(int type, const unsigned char* value, int length) {
     return SetImpl(Tlv::Generate(type, length, value));
 }
+bool TlvMap::Set(int type, const char* value, int length) {
+    (void)length;
+    return SetImpl(Tlv::Generate(type, strlen(value) + 1, value));
+}
 bool TlvMap::Set(int type, const std::string& value, int length) {
-    return SetImpl(Tlv::Generate(type, length, value));
+    (void)length;
+    return SetImpl(Tlv::Generate(type, value.size() + 1, value));
 }
 bool TlvMap::Set(int type, const TlvMap& value, int length) {
     (void)length;
@@ -157,9 +120,10 @@ bool TlvMap::Set(int type, const TlvMap& value, int length) {
 
 bool TlvMap::Get(int type, char* value, int& length) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
-	if (iter != data_.end() && (std::size_t)length > iter->second->Length()) {
+	if (iter != data_.end() && (std::size_t)length >= iter->second->Length()) {
 		memset(value, 0, length);
-		memcpy(value, iter->second->Value(), iter->second->Length());
+        length = iter->second->Length();
+		memcpy(value, iter->second->Value(), length);
 		return true;
 	}
 
@@ -179,9 +143,59 @@ bool TlvMap::Get(int type, std::string& value) const {
 bool TlvMap::Get(int type, TlvMap& value) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
 	if (iter != data_.end()) {
-		return value.Deserialization(iter->second->Value(), iter->second->Length());
+		return value.Decode(iter->second->Value(), iter->second->Length());
 	}
 
 	return false;
 }
+
+bool TlvMap::Encode() {
+    if (buffer_) {
+        delete[] buffer_;
+    }
+
+    buffer_ = new unsigned char[length_];
+    if (!buffer_) {
+        return false;
+    }
+
+    for (std::map<int, Tlv*>::iterator iter = data_.begin(); iter != data_.end(); iter++) {
+        static int offset = 0;
+        // type
+        int type = iter->second->Type();
+        memcpy(buffer_ + offset, &type, sizeof(int));
+        offset += sizeof(int);
+        
+        // length
+        int length = iter->second->Length();
+        memcpy(buffer_ + offset, &length, sizeof(int));
+        offset += sizeof(int);
+        
+        // value
+        memcpy(buffer_ + offset, iter->second->Value(), length);
+        offset += length;
+    }
+
+    return true;
+}
+
+bool TlvMap::Decode(const unsigned char* buffer, int length) {
+    if (!buffer || length <= 0) {
+        return false;
+    }
+
+    for (int offset = 0; offset < length;) {
+        int type = *(int*)(buffer + offset);
+        offset += sizeof(int);
+        int length = *(int*)(buffer + offset);
+        offset += sizeof(int);
+        Set(type, buffer + offset, length);
+        offset += length;
+    }
+
+    buffer_ = const_cast<unsigned char*>(buffer);
+    length_ = length;
+    return true;
+}
+
 }

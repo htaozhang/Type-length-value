@@ -7,9 +7,6 @@
 #include <string.h>
 
 namespace tlv {
-    /*
-    #if __cplusplus >= 201402L || _MSVC_LANG >= 201402L
-    */
 
 class Tlv {
 public:
@@ -57,7 +54,8 @@ public:
     bool Set(int type, const T& value, int length = -1) {
         return SetImpl(Tlv::Generate(type, length < 0 ? sizeof(T) : length, value));
     }
-    bool Set(int type, const unsigned char* value, int length = -1);
+    bool Set(int type, const unsigned char* value, int length);
+    bool Set(int type, const char* value, int length = -1);
     bool Set(int type, const std::string& value, int length = -1);
     bool Set(int type, const TlvMap& value, int length = -1);
 
@@ -75,10 +73,9 @@ public:
     bool Get(int type, std::string& value) const;
     bool Get(int type, TlvMap& value) const; 
     
-
 public:
-    bool Serialization();
-    bool Deserialization(const unsigned char* buffer, int length);
+    bool Encode();
+    bool Decode(const unsigned char* buffer, int length);
     
 public:
     const unsigned char* Buffer() const;
