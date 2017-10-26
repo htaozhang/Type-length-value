@@ -2,88 +2,13 @@
 
 namespace tlv
 {
-
-void Tlv::TlvImpl(const void* value, std::size_t length) {
-    length_ = length; 
+Tlv::Tlv(int type, std::size_t length, const void* value)
+    : type_(type),
+      length_(length) 
+{
     value_ = new unsigned char[length];
     memcpy(value_, value, length_);
 }
-
-Tlv::Tlv(int type, const bool& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(bool));
-}
-
-Tlv::Tlv(int type, const int8_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(int8_t));
-}
-
-Tlv::Tlv(int type, const uint8_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(uint8_t));
-}
-
-Tlv::Tlv(int type, const int16_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(int16_t));
-}
-
-Tlv::Tlv(int type, const uint16_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(uint16_t));
-}
-
-Tlv::Tlv(int type, const int32_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(int32_t));
-}
-
-Tlv::Tlv(int type, const uint32_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(uint32_t));
-}
-
-Tlv::Tlv(int type, const int64_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(int64_t));
-}
-
-Tlv::Tlv(int type, const uint64_t& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(uint64_t));
-}
-
-Tlv::Tlv(int type, const float& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(float));
-}
-
-Tlv::Tlv(int type, const double& value) : type_(type)
-{
-	TlvImpl(&value, sizeof(double));
-}
-
-Tlv::Tlv(int type, const char* value) : type_(type)
-{
-	TlvImpl(value, strlen(value) + 1);
-}
-
-Tlv::Tlv(int type, const std::string& value) : type_(type)
-{
-	TlvImpl(value.c_str(), value.length() + 1);
-}
-
-Tlv::Tlv(int type, const Tlv& value) : type_(type)
-{
-	TlvImpl(value.Value(), value.Length());
-}
-
-Tlv::Tlv(int type, const unsigned char* value, int length) : type_(type)
-{
-	TlvImpl(value, length);
-}
-
 
 Tlv::~Tlv() {
     delete[] value_;
@@ -100,8 +25,41 @@ std::size_t Tlv::Length() const {
 const unsigned char* Tlv::Value() const {
     return value_;
 }
+
+Tlv* Tlv::Generate(int type, int length, const char* value) {
+    return new Tlv(type, length, value);
+}
+Tlv* Tlv::Generate(int type, int length, const std::string& value) {
+    (void)length;
+    return new Tlv(type, value.size(), value.c_str());
+}
+Tlv* Tlv::Generate(int type, int length, const Tlv& value) {
+    return new Tlv(type, length, value.Value());
+}
+Tlv* Tlv::Generate(int type, int length, const unsigned char* value) {
+    return new Tlv(type, length, value);
+}
 }
 
+/*
+namespace tlv
+{
+Tlv* GenerateTlv(int type, int length, const char* value) {
+    return new Tlv(type, length, value);
+}
+
+Tlv* GenerateTlv(int type, int length, const std::string& value) {
+    return new Tlv(type, length, value.c_str());
+}
+
+Tlv* GenerateTlv(int type, int length, const Tlv& value) {
+    return new Tlv(type, length, value.Value());
+}
+Tlv* GenerateTlv(int type, int length, const unsigned char* value) {
+    return new Tlv(type, length, value);
+}
+}
+*/
 namespace tlv
 {
 TlvMap::TlvMap() : buffer_(NULL), length_(0) {}
@@ -138,6 +96,23 @@ std::size_t TlvMap::Length() const {
 	return length_;
 }
 
+bool TlvMap::SetImpl(Tlv* ptlv) {
+    if (ptlv == NULL || buffer_ != NULL) {
+        return false;
+    }
+
+    std::map<int, Tlv*>::const_iterator iter = data_.find(ptlv->Type());
+    if (iter != data_.end()) {
+        delete iter->second;
+    }
+    else {
+        length_ += sizeof(int) * 2 + ptlv->Length();
+    }
+
+    data_[ptlv->Type()] = ptlv;
+    return true;
+}
+
 bool TlvMap::Serialization() {
     buffer_ = new unsigned char[length_];
     
@@ -170,7 +145,7 @@ bool TlvMap::Deserialization(const unsigned char* buffer, int length) {
 		offset += sizeof(int);
 		int length = *(int*)(buffer + offset);
 		offset += sizeof(int);
-		SetImpl(new Tlv(type, buffer + offset, length));
+		Set(type, buffer + offset, length);
 		offset += length;
 	}
 
@@ -179,124 +154,17 @@ bool TlvMap::Deserialization(const unsigned char* buffer, int length) {
 	return true;
 }
 
-bool TlvMap::SetImpl(Tlv* value) {
-    if (buffer_ != NULL) {
-        return false;
-    }
 
-    std::map<int, Tlv*>::const_iterator iter = data_.find(value->Type());
-    if (iter != data_.end()) {
-        delete iter->second;
-    } else {
-        length_ += sizeof(int) * 2 + value->Length(); 
-    }
-
-    data_[value->Type()] = value;
-    return true;
+bool TlvMap::Set(int type, const unsigned char* value, int length) {
+    return SetImpl(Tlv::Generate(type, length, value));
+}
+bool TlvMap::Set(int type, const std::string& value, int length) {
+    return SetImpl(Tlv::Generate(type, length, value));
+}
+bool TlvMap::Set(int type, const TlvMap& value, int length) {
+    return SetImpl(Tlv::Generate(type, value.Length(), value.Buffer()));
 }
 
-#define GET_IMPLEMENT(type, name, value) \
-    std::map<int, Tlv*>::const_iterator iter = data_.find(type); \
-    if (iter != data_.end()) { \
-        value = (*(name*)(iter->second->Value())); \
-        return true; \
-    } \
-    return false;
-
-// bool
-bool TlvMap::Set(int type, const bool& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, bool& value) const {
-	GET_IMPLEMENT(type, bool, value)
-}
-
-
-// int8_t & uint8_t
-bool TlvMap::Set(int type, const int8_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, int8_t& value) const {
-	GET_IMPLEMENT(type, int8_t, value)
-}
-
-bool TlvMap::Set(int type, const uint8_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, uint8_t& value) const {
-	GET_IMPLEMENT(type, uint8_t, value)
-}
-
-
-// int16_t & uint16_t
-bool TlvMap::Set(int type, const int16_t& value)
-{
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, int16_t& value) const {
-	GET_IMPLEMENT(type, int16_t, value)
-}
-
-bool TlvMap::Set(int type, const uint16_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, uint16_t& value) const {
-	GET_IMPLEMENT(type, uint16_t, value)
-}
-
-
-// int32_t & uint32_t
-bool TlvMap::Set(int type, const int32_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, int32_t& value) const {
-	GET_IMPLEMENT(type, int32_t, value)
-}
-
-bool TlvMap::Set(int type, const uint32_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, uint32_t& value) const {
-	GET_IMPLEMENT(type, uint32_t, value)
-}
-
-
-// int64_t & uint64_t
-bool TlvMap::Set(int type, const int64_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, int64_t& value) const {
-	GET_IMPLEMENT(type, int64_t, value)
-}
-
-bool TlvMap::Set(int type, const uint64_t& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, uint64_t& value) const {
-	GET_IMPLEMENT(type, uint64_t, value)
-}
-
-
-// float & double
-bool TlvMap::Set(int type, const float& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, float& value) const {
-	GET_IMPLEMENT(type, float, value)
-}
-
-bool TlvMap::Set(int type, const double& value) {
-	return SetImpl(new Tlv(type, value));
-}
-bool TlvMap::Get(int type, double& value) const {
-	GET_IMPLEMENT(type, double, value)
-}
-
-
-// char* & std::string
-bool TlvMap::Set(int type, const char* value) {
-	return SetImpl(new Tlv(type, value));
-}
 bool TlvMap::Get(int type, char* value, int& length) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
 	if (iter != data_.end() && length > iter->second->Length()) {
@@ -308,9 +176,6 @@ bool TlvMap::Get(int type, char* value, int& length) const {
 	return false;
 }
 
-bool TlvMap::Set(int type, const std::string& value) {
-	return SetImpl(new Tlv(type, value));
-}
 bool TlvMap::Get(int type, std::string& value) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
 	if (iter != data_.end()) {
@@ -321,11 +186,6 @@ bool TlvMap::Get(int type, std::string& value) const {
 	return false;
 }
 
-
-// tlvmap
-bool TlvMap::Set(int type, const TlvMap& value) {
-	return SetImpl(new Tlv(type, value.Buffer(), value.Length()));
-}
 bool TlvMap::Get(int type, TlvMap& value) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
 	if (iter != data_.end()) {

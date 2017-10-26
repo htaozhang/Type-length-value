@@ -2,4 +2,6 @@
 *.o
 *.a
 /msvc/2017/Debug/*
+/msvc/2017/Release/*
+/msvc/2017/tlv/*
 /msvc/2017/.vs/*

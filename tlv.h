@@ -3,114 +3,94 @@
 
 #include <map>
 #include <string>
-
 #include <stdio.h>
 #include <string.h>
 
 namespace tlv {
-template<typename T>
+    /*
+    #if __cplusplus >= 201402L || _MSVC_LANG >= 201402L
+    */
+
 class Tlv {
 public:
-	Tlv(int type, const T& value, int length = -1) {
-        length_ = length < 0 ? sizeof(T) : length;
-        value_ = new unsigned char[length_];
-        memcpy(value_, &value, length_);
-    }
-
-	Tlv(int type, const char* value);
-	Tlv(int type, const std::string& value);
-	Tlv(int type, const Tlv& value);
-	Tlv(int type, const unsigned char* value, int length);
- 
-	~Tlv();
+    Tlv(int type, std::size_t length, const void* value);
+    ~Tlv();
     int Type() const;
     std::size_t Length() const;
     const unsigned char* Value() const;
 
+    template<typename T>
+    static Tlv* Generate(int type, int length, const T& value) {
+        return new Tlv(type, length, &value);
+    }
+    static Tlv* Generate(int type, int length, const char* value);
+    static Tlv* Generate(int type, int length, const std::string& value);
+    static Tlv* Generate(int type, int length, const Tlv& value);
+    static Tlv* Generate(int type, int length, const unsigned char* value);
+
 private:
     Tlv(const Tlv&);
-    Tlv& operator=(const Tlv&);
-    void TlvImpl(const void* value, std::size_t length);        
+    Tlv& operator=(const Tlv&) = delete;
 
 private:
     int type_;
     std::size_t length_;
     unsigned char* value_;
 };
-
-
+/*
+template<typename T>
+Tlv* GenerateTlv(int type, int length, const T& value) {
+    return new Tlv(type, length, value);
+}
+Tlv* GenerateTlv(int type, int length, const char* value); 
+Tlv* GenerateTlv(int type, int length, const std::string& value);
+Tlv* GenerateTlv(int type, int length, const Tlv& value);
+Tlv* GenerateTlv(int type, int length, const unsigned char* value);
+*/
 class TlvMap {
 public:
     TlvMap();
-	explicit TlvMap(const char* buffer);
-	explicit TlvMap(const std::string& buffer);
+    explicit TlvMap(const char* buffer);
+    explicit TlvMap(const std::string& buffer);
     virtual ~TlvMap();
 
 private:
     TlvMap(const TlvMap&);
-    TlvMap& operator=(const TlvMap&);
+    TlvMap& operator=(const TlvMap&) = delete;
 
-    bool SetImpl(Tlv* value);
+public:
+    bool SetImpl(Tlv* ptlv);
 
-	template<typename T>
-	bool GetImpl(int type, T& value) {
-		std::map<int, Tlv*>::const_iterator iter = data_.find(type); 
-			if (iter != data_.end()) {
-				value = *(T*)(iter->second->Value()); 
-				return true; 
-			} 
-		return false;
-	}
+    template<typename T>
+    bool Set(int type, const T& value, int length = -1) {
+        return SetImpl(Tlv::Generate(type, length < 0 ? sizeof(T) : length, value));
+    }
+    bool Set(int type, const unsigned char* value, int length = -1);
+    bool Set(int type, const std::string& value, int length = -1);
+    bool Set(int type, const TlvMap& value, int length = -1);
+
+    // arithmetic type
+    template<typename T>
+    bool Get(int type, T& value) const {
+        std::map<int, Tlv*>::const_iterator iter = data_.find(type); 
+        if (iter != data_.end()) {
+            value = *(T*)(iter->second->Value()); 
+            return true; 
+        }
+        return false;
+    }
+    bool Get(int type, char* value, int& length) const;
+    bool Get(int type, std::string& value) const;
+    bool Get(int type, TlvMap& value) const; 
+    
 
 public:
     bool Serialization();
-	bool Deserialization(const unsigned char* buffer, int length);
+    bool Deserialization(const unsigned char* buffer, int length);
     
-	bool Set(int type, const bool& value);
-	bool Get(int type, bool& value) const;
-
-	bool Set(int type, const int8_t& value);
-	bool Get(int type, int8_t& value) const;
-
-	bool Set(int type, const uint8_t& value); 
-	bool Get(int type, uint8_t& value) const;
-
-	bool Set(int type, const int16_t& value);
-	bool Get(int type, int16_t& value) const;
-
-	bool Set(int type, const uint16_t& value);
-	bool Get(int type, uint16_t& value) const;
-
-	bool Set(int type, const int32_t& value);
-	bool Get(int type, int32_t& value) const;
-
-	bool Set(int type, const uint32_t& value);
-	bool Get(int type, uint32_t& value) const;
-
-	bool Set(int type, const int64_t& value); 
-	bool Get(int type, int64_t& value) const;
-
-	bool Set(int type, const uint64_t& value);
-	bool Get(int type, uint64_t& value) const;
-
-	bool Set(int type, const float& value);
-	bool Get(int type, float& value) const;
-
-	bool Set(int type, const double& value);
-	bool Get(int type, double& value) const;
-
-	bool Set(int type, const char* value);
-	bool Get(int type, char* value, int& length) const;
-
-	bool Set(int type, const std::string& value);
-	bool Get(int type, std::string& value) const;
-
-	bool Set(int type, const TlvMap& value);
-	bool Get(int type, TlvMap& value) const;
-
 public:
-	const unsigned char* Buffer() const;
-	std::size_t Length() const;
+    const unsigned char* Buffer() const;
+    std::size_t Length() const;
 private:
     std::map<int, Tlv*> data_;
     unsigned char* buffer_;
