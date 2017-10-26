@@ -93,14 +93,14 @@ TEST(Tlv, GenerateTlv) {
 //    TlvMap tlvmap(x);
 //}
 
-TEST(TlvMap, SetInt32) {
-    TlvMap tlvmap;
-    int x = 1000, y = TYPE_INT32;
-    tlvmap.Set(TYPE_INT32, x);
-    EXPECT_EQ(sizeof(int) * 2 + sizeof(int), tlvmap.Length());
+//TEST(TlvMap, SetInt32) {
+//    TlvMap tlvmap;
+//    int x = 1000, y = TYPE_INT32;
+//    tlvmap.Set(TYPE_INT32, x);
+//    EXPECT_EQ(sizeof(int) * 2 + sizeof(int), tlvmap.Length());
     //printf("------------------------%d\n", memcmp((void*)&y, (void*)(tlvmap.Buffer()), 4));
     //EXPECT_EQ(0, memcmp((void*)&y, (void*)(tlvmap.Buffer()), 4));
-}
+//}
 
 
 

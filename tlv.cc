@@ -151,12 +151,13 @@ bool TlvMap::Set(int type, const std::string& value, int length) {
     return SetImpl(Tlv::Generate(type, length, value));
 }
 bool TlvMap::Set(int type, const TlvMap& value, int length) {
+    (void)length;
     return SetImpl(Tlv::Generate(type, value.Length(), value.Buffer()));
 }
 
 bool TlvMap::Get(int type, char* value, int& length) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
-	if (iter != data_.end() && length > iter->second->Length()) {
+	if (iter != data_.end() && (std::size_t)length > iter->second->Length()) {
 		memset(value, 0, length);
 		memcpy(value, iter->second->Value(), iter->second->Length());
 		return true;

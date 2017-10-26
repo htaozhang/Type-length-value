@@ -1,6 +1,7 @@
 *.exe
 *.o
 *.a
+tlv_unittest
 /msvc/2017/Debug/*
 /msvc/2017/Release/*
 /msvc/2017/tlv/*
