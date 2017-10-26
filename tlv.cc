@@ -4,14 +4,18 @@ namespace tlv
 {
 Tlv::Tlv(int type, std::size_t length, const void* value)
     : type_(type),
-      length_(length) 
+      length_(length),
+      value_(NULL)
 {
     value_ = new unsigned char[length];
     memcpy(value_, value, length_);
 }
 
 Tlv::~Tlv() {
-    delete[] value_;
+    if (value_) {
+        delete[] value_;
+        value_ = NULL;
+    }
 }
 
 int Tlv::Type() const {
@@ -22,6 +26,9 @@ std::size_t Tlv::Length() const {
     return length_;
 }
 
+std::size_t Tlv::Size() const {
+    return strlen((char*)value_);
+}
 const unsigned char* Tlv::Value() const {
     return value_;
 }
@@ -31,35 +38,17 @@ Tlv* Tlv::Generate(int type, int length, const char* value) {
 }
 Tlv* Tlv::Generate(int type, int length, const std::string& value) {
     (void)length;
-    return new Tlv(type, value.size(), value.c_str());
+    return new Tlv(type, value.size() + 1, value.c_str());
 }
 Tlv* Tlv::Generate(int type, int length, const Tlv& value) {
-    return new Tlv(type, length, value.Value());
+    (void)length;
+    return new Tlv(type, value.Length(), value.Value());
 }
 Tlv* Tlv::Generate(int type, int length, const unsigned char* value) {
     return new Tlv(type, length, value);
 }
 }
 
-/*
-namespace tlv
-{
-Tlv* GenerateTlv(int type, int length, const char* value) {
-    return new Tlv(type, length, value);
-}
-
-Tlv* GenerateTlv(int type, int length, const std::string& value) {
-    return new Tlv(type, length, value.c_str());
-}
-
-Tlv* GenerateTlv(int type, int length, const Tlv& value) {
-    return new Tlv(type, length, value.Value());
-}
-Tlv* GenerateTlv(int type, int length, const unsigned char* value) {
-    return new Tlv(type, length, value);
-}
-}
-*/
 namespace tlv
 {
 TlvMap::TlvMap() : buffer_(NULL), length_(0) {}

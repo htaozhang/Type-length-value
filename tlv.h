@@ -17,6 +17,7 @@ public:
     ~Tlv();
     int Type() const;
     std::size_t Length() const;
+    std::size_t Size() const;
     const unsigned char* Value() const;
 
     template<typename T>
@@ -37,16 +38,7 @@ private:
     std::size_t length_;
     unsigned char* value_;
 };
-/*
-template<typename T>
-Tlv* GenerateTlv(int type, int length, const T& value) {
-    return new Tlv(type, length, value);
-}
-Tlv* GenerateTlv(int type, int length, const char* value); 
-Tlv* GenerateTlv(int type, int length, const std::string& value);
-Tlv* GenerateTlv(int type, int length, const Tlv& value);
-Tlv* GenerateTlv(int type, int length, const unsigned char* value);
-*/
+
 class TlvMap {
 public:
     TlvMap();
