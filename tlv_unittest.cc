@@ -94,10 +94,12 @@ TEST(Tlv, GenerateTlv) {
     EXPECT_EQ(0, memcmp(x.c_str(), ptlv->Value(), x.size() + 1));
 }
 
-//TEST(TlvMap, Constructor) {
-//    const char* x = "hi, tlv~i'm char*";
-//    TlvMap tlvmap(x);
-//}
+TEST(Tlv, OperatorEQ) {
+    int v1 = 10, v2 = 10;
+    Tlv x(TYPE_INT32, sizeof(v1), &v1);
+    Tlv y(TYPE_INT32, sizeof(v2), &v2);
+    EXPECT_TRUE(x == y);
+}
 
 TEST(TlvMap, SetBool) {
     TlvMap tlvmap;
@@ -147,26 +149,170 @@ TEST(TlvMap, SetString) {
     EXPECT_STREQ(x.c_str(), y.c_str());
 }
 
+TEST(TlvMap, SetAllArithmeticType) {
+    TlvMap tlvmap;
+    union X {
+        bool b;
+        int8_t i8;
+        uint8_t ui8;
+        int16_t i16;
+        uint16_t ui16;
+        int32_t i32;
+        uint32_t ui32;
+        int64_t i64;
+        uint64_t ui64;
+        float f;
+        double lf;
+    } x, y;
+
+    int len =
+        8 + sizeof(bool) +
+        8 + sizeof(int8_t) +
+        8 + sizeof(uint8_t) +
+        8 + sizeof(int16_t) +
+        8 + sizeof(uint16_t) +
+        8 + sizeof(int32_t) +
+        8 + sizeof(uint32_t) +
+        8 + sizeof(int64_t) +
+        8 + sizeof(uint64_t) +
+        8 + sizeof(float) +
+        8 + sizeof(double);
+
+    x.b = true;
+
+    EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, x.b));
+    EXPECT_TRUE(tlvmap.Set(TYPE_INT8, x.i8));
+    EXPECT_TRUE(tlvmap.Set(TYPE_UINT8, x.ui8));
+    EXPECT_TRUE(tlvmap.Set(TYPE_INT16, x.i16));
+    EXPECT_TRUE(tlvmap.Set(TYPE_UINT16, x.ui16));
+    EXPECT_TRUE(tlvmap.Set(TYPE_INT32, x.i32));
+    EXPECT_TRUE(tlvmap.Set(TYPE_UINT32, x.ui32));
+    EXPECT_TRUE(tlvmap.Set(TYPE_INT64, x.i64));
+    EXPECT_TRUE(tlvmap.Set(TYPE_UINT64, x.ui64));
+    EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, x.f));
+    EXPECT_TRUE(tlvmap.Set(TYPE_DOUBLE, x.lf));
+
+    EXPECT_EQ(len, tlvmap.Length());
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_BOOL, y.b));
+    EXPECT_EQ(x.b, y.b);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_INT8, y.i8));
+    EXPECT_EQ(x.i8, y.i8);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_UINT8, y.ui8));
+    EXPECT_EQ(x.ui8, y.ui8);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_INT16, y.i16));
+    EXPECT_EQ(x.i16, y.i16);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_UINT16, y.ui16));
+    EXPECT_EQ(x.ui16, y.ui16);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_INT32, y.i32));
+    EXPECT_EQ(x.i32, y.i32);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_UINT32, y.ui32));
+    EXPECT_EQ(x.ui32, y.ui32);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_INT64, y.i64));
+    EXPECT_EQ(x.i64, y.i64);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_UINT64, y.ui64));
+    EXPECT_EQ(x.ui64, y.ui64);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_FLOAT, y.f));
+    EXPECT_EQ(x.f, y.f);
+
+    EXPECT_TRUE(tlvmap.Get(TYPE_DOUBLE, y.lf));
+    EXPECT_EQ(x.lf, y.lf);
+
+}
+
+TEST(TlvMap, OperatorEQ) {
+    TlvMap x, y;
+    EXPECT_TRUE(x == y);
+}
+
+TEST(TlvMap, OperatorNE) {
+    TlvMap x, y;
+    x.Set(TYPE_INT32, 1);
+    EXPECT_TRUE(x != y);
+}
+
 TEST(TlvMap, Encode) {
     TlvMap tlvmap;
-    EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, true));
-    EXPECT_TRUE(tlvmap.Set(TYPE_INT8, INT8_MIN));
-    EXPECT_TRUE(tlvmap.Set(TYPE_UINT8, UINT8_MAX));
-    EXPECT_TRUE(tlvmap.Set(TYPE_INT16, INT16_MIN));
-    EXPECT_TRUE(tlvmap.Set(TYPE_UINT16, UINT16_MAX));
-    EXPECT_TRUE(tlvmap.Set(TYPE_INT32, INT_MIN));
-    EXPECT_TRUE(tlvmap.Set(TYPE_UINT32, UINT_MAX));
-    EXPECT_TRUE(tlvmap.Set(TYPE_INT64, 1LL));
-    EXPECT_TRUE(tlvmap.Set(TYPE_UINT64, 1ULL));
-    EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, 3.14F));
-    EXPECT_TRUE(tlvmap.Set(TYPE_DOUBLE, 3.14L));
+    union X {
+        bool b;
+        int32_t i32;
+        float f;
+    } x;
+
+    bool setbool = true;
+    bool setint32 = false;
+    bool setfloat = false;
+    x.b = true;
+
+    int len = 0;
+    unsigned char* buff = new unsigned char[1024];
+
+    if (setbool) {
+        EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, x.b));
+        int type = TYPE_BOOL, length = sizeof(x.b);
+        memcpy(buff + len, &type, sizeof(type));
+        memcpy(buff + len + sizeof(type), &length, sizeof(length));
+        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.b), sizeof(x.b));
+        len += 8 + sizeof(x.b);
+    }
+
+    if (setint32) {
+        EXPECT_TRUE(tlvmap.Set(TYPE_INT32, x.i32));
+        int type = TYPE_INT32, length = sizeof(x.i32);
+        memcpy(buff + len, &type, sizeof(type));
+        memcpy(buff + len + sizeof(type), &length, sizeof(length));
+        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.i32), sizeof(x.i32));
+        len += 8 + sizeof(x.i32);
+    }
+
+    if (setfloat) {
+        EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, x.f));
+        int type = TYPE_FLOAT, length = sizeof(x.f);
+        memcpy(buff + len, &type, sizeof(type));
+        memcpy(buff + len + sizeof(type), &length, sizeof(length));
+        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.f), sizeof(x.f));
+        len += 8 + sizeof(x.f);
+    }
+
+    EXPECT_TRUE(tlvmap.Encode());
+    EXPECT_EQ(len, tlvmap.Length());
+    EXPECT_EQ(0, memcmp(tlvmap.Buffer(), buff, len));
 }
 
 
+TEST(TlvMap, Decode) {
+    TlvMap tlvmap;
+    union X {
+        bool b;
+        int32_t i32;
+        float f;
+    } x, y;
+    
+    x.b = true;
 
+    EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, x.b));
+    EXPECT_TRUE(tlvmap.Set(TYPE_INT32, x.i32));
+    EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, x.f));
+    EXPECT_TRUE(tlvmap.Encode());
+    EXPECT_EQ(33, tlvmap.Length());
 
+    //TlvMap that();
+    //EXPECT_TRUE(that.Decode());
 
+    TlvMap that;
+    EXPECT_TRUE(that.Decode(tlvmap.Buffer(), tlvmap.Length()));
 
+    EXPECT_TRUE(tlvmap == that);
+}
 
 
 

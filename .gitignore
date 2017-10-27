@@ -6,5 +6,5 @@ tlv_unittest
 /msvc/2017/Release/*
 /msvc/2017/tlv/*
 /msvc/2017/.vs/*
-/3rd/googletest/lib/*
+!/3rd/googletest/lib/*
 !.gitignore

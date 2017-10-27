@@ -1,6 +1,7 @@
 #ifndef TLV_H_
 #define TLV_H_
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <stdio.h>
@@ -16,6 +17,8 @@ public:
     std::size_t Length() const;
     std::size_t Size() const;
     const unsigned char* Value() const;
+    bool operator==(const Tlv& that) const;
+    bool operator!=(const Tlv& that) const;
 
     template<typename T>
     static Tlv* Generate(int type, int length, const T& value) {
@@ -41,7 +44,10 @@ public:
     TlvMap();
     explicit TlvMap(const char* buffer);
     explicit TlvMap(const std::string& buffer);
+    TlvMap(const unsigned char* buffer, std::size_t length);
     virtual ~TlvMap();
+    bool operator==(const TlvMap& that) const;
+    bool operator!=(const TlvMap& that) const;
 
 private:
     TlvMap(const TlvMap&);
@@ -75,6 +81,7 @@ public:
     
 public:
     bool Encode();
+    bool Decode();
     bool Decode(const unsigned char* buffer, int length);
     
 public:

@@ -29,8 +29,19 @@ std::size_t Tlv::Length() const {
 std::size_t Tlv::Size() const {
     return strlen((char*)value_);
 }
+
 const unsigned char* Tlv::Value() const {
     return value_;
+}
+
+bool Tlv::operator==(const Tlv& that) const {
+    return (type_ == that.type_ &&
+        length_ == that.length_ &&
+        std::memcmp(value_, that.value_, length_) == 0);
+}
+
+bool Tlv::operator!=(const Tlv& that) const {
+    return !(*this == that);
 }
 
 Tlv* Tlv::Generate(int type, int length, const char* value) {
@@ -47,6 +58,7 @@ Tlv* Tlv::Generate(int type, int length, const Tlv& value) {
 Tlv* Tlv::Generate(int type, int length, const unsigned char* value) {
     return new Tlv(type, length, value);
 }
+
 }
 
 namespace tlv
@@ -64,6 +76,11 @@ TlvMap::TlvMap(const std::string& buffer) {
 	buffer_ = new unsigned char[length_];
 	memcpy(buffer_, buffer.c_str(), length_);
 }
+TlvMap::TlvMap(const unsigned char* buffer, std::size_t length)
+    : length_(length) {
+    buffer_ = new unsigned char[length_];
+    memcpy(buffer_, buffer, length_);
+}
 
 TlvMap::~TlvMap() {
     if (buffer_) {
@@ -75,6 +92,20 @@ TlvMap::~TlvMap() {
          iter != data_.end(); iter++) {
         delete iter->second;
     }
+}
+
+bool TlvMap::operator==(const TlvMap& that) const {
+    for (std::map<int, Tlv*>::const_iterator iter = data_.begin(); iter != data_.end(); iter++) {
+        std::map<int, Tlv*>::const_iterator it = that.data_.find(iter->first);
+        if (it == that.data_.end() || *(it->second) != *(iter->second)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool TlvMap::operator!=(const TlvMap& that) const {
+    return !(*this == that);
 }
 
 const unsigned char* TlvMap::Buffer() const {
@@ -179,22 +210,47 @@ bool TlvMap::Encode() {
     return true;
 }
 
-bool TlvMap::Decode(const unsigned char* buffer, int length) {
-    if (!buffer || length <= 0) {
+bool TlvMap::Decode() {
+    if (!buffer_ || length_ <= 0) {
         return false;
     }
 
-    for (int offset = 0; offset < length;) {
-        int type = *(int*)(buffer + offset);
+    for (int offset = 0, T = 0, L = 0; offset < length_;) {
+        T = *(int*)(buffer_ + offset);
         offset += sizeof(int);
-        int length = *(int*)(buffer + offset);
+
+        L = *(int*)(buffer_ + offset);
         offset += sizeof(int);
-        Set(type, buffer + offset, length);
-        offset += length;
+
+        Set(T, buffer_ + offset, L);
+        offset += L;
     }
 
-    buffer_ = const_cast<unsigned char*>(buffer);
-    length_ = length;
+    return true;
+}
+
+bool TlvMap::Decode(const unsigned char* buffer, int length) {
+    if (buffer == NULL || length <= 0) {
+        return false;
+    }
+
+    for (int offset = 0, T = 0, L = 0; offset < length;) {
+        //T = *(int*)(buffer + offset);
+        memcpy(&T, buffer + offset, sizeof(T));
+        offset += sizeof(int);
+
+        //L = *(int*)(buffer + offset);
+        memcpy(&L, buffer + offset, sizeof(L));
+        offset += sizeof(int);
+        std::cout << T << " : " << L << std::endl;
+        getchar();
+
+        Set(T, buffer + offset, L);
+        offset += L;
+    }
+
+    //buffer_ = const_cast<unsigned char*>(buffer);
+    //length_ = length;
     return true;
 }
 
