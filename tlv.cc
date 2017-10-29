@@ -247,9 +247,10 @@ bool TlvMap::Decode(const unsigned char* buffer, std::size_t length) {
     if (!buffer_ || length <= 0) {
         return false;
     }
-    std::memcpy(buffer_, buffer, length_);
+    //std::memcpy(buffer_, buffer, length_);
 
-    for (int offset = 0, T = 0, L = 0; (std::size_t)offset < length_; ) {
+    int offset = 0, T = 0, L = 0; 
+    while (offset < length_) {
         // type
         //T = *(int*)(buffer + offset);
         std::memcpy(&T, buffer + offset, sizeof T);
@@ -260,9 +261,13 @@ bool TlvMap::Decode(const unsigned char* buffer, std::size_t length) {
         std::memcpy(&L, buffer + offset, sizeof L);
         offset += sizeof(int);
 
+        std::cout << "<" << T << "> <" << L << "> <" << offset << ">" << std::endl;
         // tlv
         Set(T, buffer + offset, L);
         offset += L;
+
+        std::cout << "------" << offset << "------" << length_ << std::endl;
+
     }
 
     return true;
