@@ -8,3 +8,4 @@ tlv_unittest
 /msvc/2017/.vs/*
 !/3rd/googletest/lib/*
 !.gitignore
+/xcode/.DS_Store

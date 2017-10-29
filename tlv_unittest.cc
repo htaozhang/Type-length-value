@@ -165,7 +165,7 @@ TEST(TlvMap, SetAllArithmeticType) {
         double lf;
     } x, y;
 
-    int len =
+    std::size_t len =
         8 + sizeof(bool) +
         8 + sizeof(int8_t) +
         8 + sizeof(uint8_t) +
@@ -249,11 +249,11 @@ TEST(TlvMap, Encode) {
     } x;
 
     bool setbool = true;
-    bool setint32 = false;
-    bool setfloat = false;
+    bool setint32 = true;
+    bool setfloat = true;
     x.b = true;
 
-    int len = 0;
+    std::size_t len = 0;
     unsigned char* buff = new unsigned char[1024];
 
     if (setbool) {
@@ -291,27 +291,31 @@ TEST(TlvMap, Encode) {
 
 TEST(TlvMap, Decode) {
     TlvMap tlvmap;
-    union X {
+    struct X {
         bool b;
         int32_t i32;
         float f;
-    } x, y;
-    
-    x.b = true;
+    } y, x = {1, 128, 3.14f};
 
     EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, x.b));
     EXPECT_TRUE(tlvmap.Set(TYPE_INT32, x.i32));
     EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, x.f));
     EXPECT_TRUE(tlvmap.Encode());
-    EXPECT_EQ(33, tlvmap.Length());
-
-    //TlvMap that();
-    //EXPECT_TRUE(that.Decode());
+    EXPECT_EQ(33u, tlvmap.Length());
 
     TlvMap that;
     EXPECT_TRUE(that.Decode(tlvmap.Buffer(), tlvmap.Length()));
-
     EXPECT_TRUE(tlvmap == that);
+    EXPECT_TRUE(that.Get(TYPE_BOOL, y.b));
+    EXPECT_TRUE(that.Get(TYPE_INT32, y.i32));
+    EXPECT_TRUE(that.Get(TYPE_FLOAT, y.f));
+    EXPECT_EQ(x.b, y.b);
+    EXPECT_EQ(x.i32, y.i32);
+    EXPECT_EQ(x.f, y.f);
+
+    //TlvMap that2(tlvmap.Buffer(), tlvmap.Length());
+    //EXPECT_TRUE(that2.Decode());
+    //EXPECT_TRUE(tlvmap == that2);
 }
 
 
