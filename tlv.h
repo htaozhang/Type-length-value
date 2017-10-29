@@ -82,7 +82,7 @@ public:
 public:
     bool Encode();
     bool Decode();
-    bool Decode(const unsigned char* buffer, int length);
+    bool Decode(const unsigned char* buffer, std::size_t length);
     
 public:
     const unsigned char* Buffer() const;
