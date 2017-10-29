@@ -305,7 +305,7 @@ TEST(TlvMap, Decode) {
 
     TlvMap that;
     EXPECT_TRUE(that.Decode(tlvmap.Buffer(), tlvmap.Length()));
-    //EXPECT_TRUE(tlvmap == that);
+    EXPECT_TRUE(tlvmap == that);
     /*
     EXPECT_TRUE(that.Get(TYPE_BOOL, y.b));
     EXPECT_TRUE(that.Get(TYPE_INT32, y.i32));
