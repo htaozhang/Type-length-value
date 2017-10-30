@@ -20,78 +20,33 @@ enum {
     TYPE_FLOAT,
     TYPE_DOUBLE,
     TYPE_CHARS,
+    TYPE_CONSTCHARS,
     TYPE_STRING,
     TYPE_TLV,
     TYPE_TLVMAP
 };
 
 TEST(Tlv, Constructor) {
-    int x = 10;
-    Tlv *ptlv = new Tlv(TYPE_INT32, sizeof(int), &x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_INT32, ptlv->Type());
-    EXPECT_EQ(sizeof(int), ptlv->Length());
-    EXPECT_EQ(x, *((int*)(ptlv->Value())));
-}
+#define __tlv_impl_code(t, l, o, v, pv) \
+    do { \
+        Tlv *ptlv = new Tlv((t), l, (pv)); \
+        EXPECT_TRUE(ptlv != NULL); \
+        EXPECT_EQ((t), ptlv->Type()); \
+        EXPECT_EQ(l, ptlv->Length()); \
+        EXPECT_EQ((v), *((o)(ptlv->Value()))); \
+    } while (0);
 
-TEST(Tlv, GenerateBool) {
-    bool x = true;
-    Tlv* ptlv = Tlv::Generate(TYPE_BOOL, sizeof(bool), x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_BOOL, ptlv->Type());
-    EXPECT_EQ(sizeof(bool), ptlv->Length());
-    EXPECT_EQ(x, *((bool*)(ptlv->Value())));
-    EXPECT_EQ(0, memcmp(&x, ptlv->Value(), sizeof(bool)));
-}
+    struct X {
+        bool b;
+        int32_t i32;
+        float f;
+        char cstring[18];
+        std::string str;
+    } x = { 1, 128, 3.14f, "hi, tlv~i'm char*", "hi, tlv~i'm std::string"};
 
-TEST(Tlv, GenerateInt32) {
-    int x = 100;
-    Tlv* ptlv = Tlv::Generate(TYPE_INT32, sizeof(int), x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_INT32, ptlv->Type());
-    EXPECT_EQ(sizeof(int), ptlv->Length());
-    EXPECT_EQ(x, *((int*)(ptlv->Value())));
-    EXPECT_EQ(0, memcmp(&x, ptlv->Value(), sizeof(int)));
-}
-
-TEST(Tlv, GenerateFloat) {
-    float x = 3.14f;
-    Tlv* ptlv = Tlv::Generate(TYPE_FLOAT, sizeof(float), x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_FLOAT, ptlv->Type());
-    EXPECT_EQ(sizeof(float), ptlv->Length());
-    EXPECT_EQ(x, *((float*)(ptlv->Value())));
-    EXPECT_EQ(0, memcmp(&x, ptlv->Value(), sizeof(float)));
-}
-
-TEST(Tlv, GenerateChars) {
-    const char* x = "hi, tlv~i'm char*";
-    Tlv* ptlv = Tlv::Generate(TYPE_CHARS, strlen(x) + 1, x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_CHARS, ptlv->Type());
-    EXPECT_EQ(strlen(x) + 1, ptlv->Length());
-    EXPECT_STREQ(x, (char*)(ptlv->Value()));
-    EXPECT_EQ(0, memcmp(x, ptlv->Value(), strlen(x) + 1));
-}
-
-TEST(Tlv, GenerateString) {
-    std::string x = "hi, tlv~i'm std::string";
-    Tlv* ptlv = Tlv::Generate(TYPE_STRING, 0, x);
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_STRING, ptlv->Type());
-    EXPECT_EQ(x.size() + 1, ptlv->Length());
-    EXPECT_STREQ(x.c_str(), (char*)(ptlv->Value()));
-    EXPECT_EQ(0, memcmp(x.c_str(), ptlv->Value(), x.size() + 1));
-}
-
-TEST(Tlv, GenerateTlv) {
-    std::string x = "hi, tlv~i'm tlv";
-    Tlv* ptlv = Tlv::Generate(TYPE_TLV, 0, *(Tlv::Generate(TYPE_STRING, 0, x)));
-    EXPECT_TRUE(ptlv != NULL);
-    EXPECT_EQ(TYPE_TLV, ptlv->Type());
-    EXPECT_EQ(x.size() + 1, ptlv->Length());
-    EXPECT_STREQ(x.c_str(), (char*)(ptlv->Value()));
-    EXPECT_EQ(0, memcmp(x.c_str(), ptlv->Value(), x.size() + 1));
+    __tlv_impl_code(TYPE_BOOL, sizeof(bool), bool*, x.b, &(x.b));
+    __tlv_impl_code(TYPE_BOOL, sizeof(int32_t), int32_t*, x.i32, &(x.i32));
+    __tlv_impl_code(TYPE_BOOL, sizeof(float), float*, x.f, &(x.f));
 }
 
 TEST(Tlv, OperatorEQ) {
@@ -248,46 +203,38 @@ TEST(TlvMap, Encode) {
         float f;
     } x;
 
-    bool setbool = true;
-    bool setint32 = true;
-    bool setfloat = true;
     x.b = true;
 
     std::size_t len = 0;
     unsigned char* buff = new unsigned char[1024];
 
-    if (setbool) {
-        EXPECT_TRUE(tlvmap.Set(TYPE_BOOL, x.b));
-        int type = TYPE_BOOL, length = sizeof(x.b);
-        memcpy(buff + len, &type, sizeof(type));
-        memcpy(buff + len + sizeof(type), &length, sizeof(length));
-        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.b), sizeof(x.b));
-        len += 8 + sizeof(x.b);
-    }
+#define __impl_code(t, l, v, pv) \
+    do { \
+        EXPECT_TRUE(tlvmap.Set(t, (v))); \
+        int type = (t), length = (l); \
+        memcpy(buff + len, &type, sizeof(type)); \
+        memcpy(buff + len + sizeof(type), &length, sizeof(length)); \
+        memcpy(buff + len + sizeof(type) + sizeof(length), (pv), length); \
+        len += 8 + length; \
+    } while (0); 
 
-    if (setint32) {
-        EXPECT_TRUE(tlvmap.Set(TYPE_INT32, x.i32));
-        int type = TYPE_INT32, length = sizeof(x.i32);
-        memcpy(buff + len, &type, sizeof(type));
-        memcpy(buff + len + sizeof(type), &length, sizeof(length));
-        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.i32), sizeof(x.i32));
-        len += 8 + sizeof(x.i32);
-    }
+    __impl_code(TYPE_BOOL, sizeof(x.b), x.b, &(x.b));
+    __impl_code(TYPE_INT32, sizeof(x.i32), x.i32, &(x.i32));
+    __impl_code(TYPE_FLOAT, sizeof(x.f), x.f, &(x.f));
 
-    if (setfloat) {
-        EXPECT_TRUE(tlvmap.Set(TYPE_FLOAT, x.f));
-        int type = TYPE_FLOAT, length = sizeof(x.f);
-        memcpy(buff + len, &type, sizeof(type));
-        memcpy(buff + len + sizeof(type), &length, sizeof(length));
-        memcpy(buff + len + sizeof(type) + sizeof(length), &(x.f), sizeof(x.f));
-        len += 8 + sizeof(x.f);
-    }
+    char cstring[] = "hello, cstring";
+    __impl_code(TYPE_CHARS, sizeof(cstring), cstring, cstring);
+
+    const char* ccstring = "hello, const cstring";
+    __impl_code(TYPE_CONSTCHARS, strlen(ccstring) + 1, ccstring, ccstring);
+
+    std::string str = "hi, std::string";
+    __impl_code(TYPE_STRING, str.size() + 1, str, str.c_str());
 
     EXPECT_TRUE(tlvmap.Encode());
     EXPECT_EQ(len, tlvmap.Length());
-    EXPECT_EQ(0, memcmp(tlvmap.Buffer(), buff, len));
+    EXPECT_EQ(0, std::memcmp(tlvmap.Buffer(), buff, len));
 }
-
 
 TEST(TlvMap, Decode) {
     TlvMap tlvmap;
@@ -305,19 +252,21 @@ TEST(TlvMap, Decode) {
 
     TlvMap that;
     EXPECT_TRUE(that.Decode(tlvmap.Buffer(), tlvmap.Length()));
+    EXPECT_EQ(33u, tlvmap.Length());
     EXPECT_TRUE(tlvmap == that);
-    /*
     EXPECT_TRUE(that.Get(TYPE_BOOL, y.b));
     EXPECT_TRUE(that.Get(TYPE_INT32, y.i32));
     EXPECT_TRUE(that.Get(TYPE_FLOAT, y.f));
     EXPECT_EQ(x.b, y.b);
     EXPECT_EQ(x.i32, y.i32);
     EXPECT_EQ(x.f, y.f);
-    */
-    //TlvMap that2(tlvmap.Buffer(), tlvmap.Length());
-    //EXPECT_TRUE(that2.Decode());
-    //EXPECT_TRUE(tlvmap == that2);
+
+    TlvMap that2(tlvmap.Buffer(), tlvmap.Length());
+    EXPECT_TRUE(that2.Decode());
+    EXPECT_EQ(33u, that2.Length());
+    EXPECT_TRUE(tlvmap == that2);
 }
+
 
 
 

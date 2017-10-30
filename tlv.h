@@ -20,15 +20,6 @@ public:
     bool operator==(const Tlv& that) const;
     bool operator!=(const Tlv& that) const;
 
-    template<typename T>
-    static Tlv* Generate(int type, int length, const T& value) {
-        return new Tlv(type, length, &value);
-    }
-    static Tlv* Generate(int type, int length, const char* value);
-    static Tlv* Generate(int type, int length, const std::string& value);
-    static Tlv* Generate(int type, int length, const Tlv& value);
-    static Tlv* Generate(int type, int length, const unsigned char* value);
-
 private:
     Tlv(const Tlv&);
     Tlv& operator=(const Tlv&) = delete;
@@ -55,17 +46,23 @@ private:
 
 public:
     bool SetImpl(Tlv* ptlv);
-
+    
+    // arithmetic type
     template<typename T>
-    bool Set(int type, const T& value, int length = -1) {
-        return SetImpl(Tlv::Generate(type, length < 0 ? sizeof(T) : length, value));
+    bool Set(int type, T value, int length = -1) {
+        return SetImpl(new Tlv(type, length < 0 ? sizeof(T) : length, &value));
     }
     bool Set(int type, const unsigned char* value, int length);
     bool Set(int type, const char* value, int length = -1);
     bool Set(int type, const std::string& value, int length = -1);
     bool Set(int type, const TlvMap& value, int length = -1);
 
-    // arithmetic type
+    bool Set(int type, unsigned char* value, int length);
+    bool Set(int type, char* value, int length = -1);
+    bool Set(int type, std::string& value, int length = -1);
+    bool Set(int type, TlvMap& value, int length = -1);
+
+    
     template<typename T>
     bool Get(int type, T& value) const {
         std::map<int, Tlv*>::const_iterator iter = data_.find(type); 
@@ -91,6 +88,7 @@ private:
     std::map<int, Tlv*> data_;
     unsigned char* buffer_;
     std::size_t length_;
+    bool changeable_;
 };
 
 }
