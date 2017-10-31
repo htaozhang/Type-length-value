@@ -15,7 +15,6 @@ public:
     ~Tlv();
     int Type() const;
     std::size_t Length() const;
-    std::size_t Size() const;
     const unsigned char* Value() const;
     bool operator==(const Tlv& that) const;
     bool operator!=(const Tlv& that) const;

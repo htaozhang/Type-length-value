@@ -26,10 +26,6 @@ std::size_t Tlv::Length() const {
     return length_;
 }
 
-std::size_t Tlv::Size() const {
-    return strlen((char*)value_);
-}
-
 const unsigned char* Tlv::Value() const {
     return value_;
 }
@@ -57,21 +53,21 @@ TlvMap::TlvMap(const char* buffer) {
 	length_ = strlen(buffer) + 1;
     changeable_ = false;
 	buffer_ = new unsigned char[length_];
-	memcpy(buffer_, buffer, length_);
+	std::memcpy(buffer_, buffer, length_);
 }
 
 TlvMap::TlvMap(const std::string& buffer) {
 	length_ = buffer.size() + 1;
     changeable_ = false;
 	buffer_ = new unsigned char[length_];
-	memcpy(buffer_, buffer.c_str(), length_);
+	std::memcpy(buffer_, buffer.c_str(), length_);
 }
 
 TlvMap::TlvMap(const unsigned char* buffer, std::size_t length)
     : length_(length),
       changeable_(false) {
     buffer_ = new unsigned char[length_];
-    memcpy(buffer_, buffer, length_);
+    std::memcpy(buffer_, buffer, length_);
 }
 
 TlvMap::~TlvMap() {
@@ -160,9 +156,9 @@ bool TlvMap::Get(int type, char* value, int& length) const {
 	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
 	if (iter != data_.end() && 
         (std::size_t)length >= iter->second->Length()) {
-		memset(value, 0, length);
+		std::memset(value, 0, length);
         length = iter->second->Length();
-		memcpy(value, iter->second->Value(), length);
+		std::memcpy(value, iter->second->Value(), length);
 		return true;
 	}
 
