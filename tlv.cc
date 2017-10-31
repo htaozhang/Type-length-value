@@ -50,17 +50,17 @@ TlvMap::TlvMap()
 }
 
 TlvMap::TlvMap(const char* buffer) {
-	length_ = strlen(buffer) + 1;
+    length_ = strlen(buffer) + 1;
     changeable_ = false;
-	buffer_ = new unsigned char[length_];
-	std::memcpy(buffer_, buffer, length_);
+    buffer_ = new unsigned char[length_];
+    std::memcpy(buffer_, buffer, length_);
 }
 
 TlvMap::TlvMap(const std::string& buffer) {
-	length_ = buffer.size() + 1;
+    length_ = buffer.size() + 1;
     changeable_ = false;
-	buffer_ = new unsigned char[length_];
-	std::memcpy(buffer_, buffer.c_str(), length_);
+    buffer_ = new unsigned char[length_];
+    std::memcpy(buffer_, buffer.c_str(), length_);
 }
 
 TlvMap::TlvMap(const unsigned char* buffer, std::size_t length)
@@ -98,11 +98,11 @@ bool TlvMap::operator!=(const TlvMap& that) const {
 }
 
 const unsigned char* TlvMap::Buffer() const {
-	return buffer_;
+    return buffer_;
 }
 
 std::size_t TlvMap::Length() const {
-	return length_;
+    return length_;
 }
 
 bool TlvMap::SetImpl(Tlv* ptlv) {
@@ -153,35 +153,35 @@ bool TlvMap::Set(int type, TlvMap& value, int length) {
 }
 
 bool TlvMap::Get(int type, char* value, int& length) const {
-	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
-	if (iter != data_.end() && 
+    std::map<int, Tlv*>::const_iterator iter = data_.find(type);
+    if (iter != data_.end() && 
         (std::size_t)length >= iter->second->Length()) {
-		std::memset(value, 0, length);
+        std::memset(value, 0, length);
         length = iter->second->Length();
-		std::memcpy(value, iter->second->Value(), length);
-		return true;
-	}
+        std::memcpy(value, iter->second->Value(), length);
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 bool TlvMap::Get(int type, std::string& value) const {
-	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
-	if (iter != data_.end()) {
-		value = (char*)(iter->second->Value());
-		return true;
-	}
+    std::map<int, Tlv*>::const_iterator iter = data_.find(type);
+    if (iter != data_.end()) {
+        value = (char*)(iter->second->Value());
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 bool TlvMap::Get(int type, TlvMap& value) const {
-	std::map<int, Tlv*>::const_iterator iter = data_.find(type);
-	if (iter != data_.end()) {
-		return value.Decode(iter->second->Value(), iter->second->Length());
-	}
+    std::map<int, Tlv*>::const_iterator iter = data_.find(type);
+    if (iter != data_.end()) {
+        return value.Decode(iter->second->Value(), iter->second->Length());
+    }
 
-	return false;
+    return false;
 }
 
 bool TlvMap::Encode() {

@@ -267,12 +267,3 @@ TEST(TlvMap, Decode) {
     EXPECT_TRUE(tlvmap == that2);
 }
 
-
-
-
-
-
-
-
-
-

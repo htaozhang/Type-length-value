@@ -55,7 +55,6 @@ public:
     bool Set(int type, const char* value, int length = -1);
     bool Set(int type, const std::string& value, int length = -1);
     bool Set(int type, const TlvMap& value, int length = -1);
-
     bool Set(int type, unsigned char* value, int length);
     bool Set(int type, char* value, int length = -1);
     bool Set(int type, std::string& value, int length = -1);
